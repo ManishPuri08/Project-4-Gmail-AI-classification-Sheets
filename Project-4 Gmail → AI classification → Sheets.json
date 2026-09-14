@@ -1,0 +1,345 @@
+{
+  "name": "Project-4 Gmail → AI classification → Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "maxResults": 1,
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -288,
+        -32
+      ],
+      "id": "b585bedc-6114-4141-8ad4-11e05954201a",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "wfgcVj1FfW6dxMX9",
+          "name": "Gmail account 104"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}",
+        "simple": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -64,
+        -32
+      ],
+      "id": "36331553-d977-4ac4-bcb4-ca2da4e77001",
+      "name": "Get a message",
+      "webhookId": "2066b3dd-3c33-4ca2-a28e-0d73f857d7fb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "wfgcVj1FfW6dxMX9",
+          "name": "Gmail account 104"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Classify the following customer email.\n\nYou must label it into exactly ONE of these categories:\n\nSales\nSupport\nComplaint\nBilling\nGeneral\n\nDefinitions:\n\nSales = enquiries about products, pricing, quotations, purchases, demos, availability or new business.\n\nSupport = requests for help using an existing product/service, technical issues, how-to questions or troubleshooting.\n\nComplaint = dissatisfaction, poor service, bad experience, escalation, grievance or negative feedback.\n\nBilling = invoices, payments, refunds, charges, payment failures, outstanding amounts or billing discrepancies.\n\nGeneral = emails that do not clearly belong to Sales, Support, Complaint or Billing.\n\nCustomer Email - {{ $json.headers.from }}\nOutput should be -\nMessage id\nLabel name\nSender Email ID",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        160,
+        -32
+      ],
+      "id": "ebc0bd9c-1643-4439-9e65-bc6ce31771c8",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4.1-nano",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        112,
+        128
+      ],
+      "id": "b28c86ae-2518-47ef-84b7-7f0ae24ad1b8",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "Xp147n4846wGoNG6",
+          "name": "OpenRouter account 41"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"category\": \"Sales\",\n  \"priority\": \"Medium\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        336,
+        160
+      ],
+      "id": "38fd7c05-c2fa-4945-b322-e96e7ca70b04",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Q2_Cdm5qsAOQ8pzf46Wd3leKIPt6D-rQ_f-7xPTICCA",
+          "mode": "list",
+          "cachedResultName": "Lead form",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Q2_Cdm5qsAOQ8pzf46Wd3leKIPt6D-rQ_f-7xPTICCA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Q2_Cdm5qsAOQ8pzf46Wd3leKIPt6D-rQ_f-7xPTICCA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $('Get a message').item.json.date }}",
+            "Sender": "={{ $('Get a message').item.json.headers.from }}",
+            "Subject": "={{ $('Get a message').item.json.headers.subject }}",
+            "Category": "={{ $json.output.category }}",
+            "Priority": "={{ $json.output.priority }}",
+            "Body": "={{ $('Get a message').item.json.text }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sender",
+              "displayName": "Sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Body",
+              "displayName": "Body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        528,
+        -32
+      ],
+      "id": "45237840-2140-480e-bbe9-91c6c58c0dbc",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PKTIO7MputUsqAa3",
+          "name": "Google Sheets account 81"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Get a message').item.json.id }}",
+        "labelIds": "={{ $('Get many labels').all().find(l => l.json.name === $('AI Agent').item.json.output.category)?.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        976,
+        -32
+      ],
+      "id": "83d7c24e-e2d3-4979-ade4-baa926999530",
+      "name": "Add label to message",
+      "webhookId": "9024022c-55be-4a33-8103-94f578a9d41f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "wfgcVj1FfW6dxMX9",
+          "name": "Gmail account 104"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "label"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        -32
+      ],
+      "id": "aece3913-4aa7-4231-a4ab-a33f58795931",
+      "name": "Get many labels",
+      "webhookId": "5be2b9c8-1db4-4478-9b59-531cac7d0a96",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "wfgcVj1FfW6dxMX9",
+          "name": "Gmail account 104"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a message": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Get many labels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many labels": {
+      "main": [
+        [
+          {
+            "node": "Add label to message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5dca4b66-c40b-4cf9-924b-01efbfc24166",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e99e0d1157c9445a053edb1d8bcb3c19869f806f2b50808813faa4f314de9dd4"
+  },
+  "nodeGroups": [],
+  "id": "Y9V9K16vJFk5FUGI",
+  "tags": []
+}
